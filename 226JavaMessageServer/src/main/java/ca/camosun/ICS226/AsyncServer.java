@@ -33,7 +33,7 @@ public class AsyncServer {
 
     String getMessage(String fullInput){
 
-        if (fullInput.length() < KEY_COMMAND_LENGTH){
+        if (fullInput.length() != KEY_COMMAND_LENGTH){
             return BAD_GET_REPLY;
         }
         String key = getKey(fullInput);
@@ -51,6 +51,9 @@ public class AsyncServer {
 
     }
 
+
+    //this function puts the message into the dictionary. The Server sends it's response also from this function.
+    //takes the outWriter and the full user string as input.
     void putMessage(PrintWriter out, String fullInput){
         try{
             if (fullInput.length() < MIN_MESSAGE_LENGTH){
@@ -67,10 +70,10 @@ public class AsyncServer {
                 return;
             } 
 
-            if (!getMessage(fullInput).equals(BAD_GET_REPLY)){
-                out.println(BAD_REPLY);
-                return;
-            }
+            // if (!getMessage(fullInput.substring(0, KEY_COMMAND_LENGTH)).equals(BAD_GET_REPLY)){  //make sure no message exists at the given key .... this enforces unique key and we don't want that yet!
+            //     out.println(BAD_REPLY);
+            //     return;
+            // }
 
             synchronized(this) { //this is our lock! both put and get comands have to be done in there 
                 Dict.put(key, message);
@@ -85,6 +88,8 @@ public class AsyncServer {
 
 
     //FIX ME : usrKey comes from the COMMAND LINE and should be input checked!
+    //takes the client socket in as a paramater. This function reads in the string off the command line and delgates whether it should be a GET or PUT function called. 
+    //if we were to add more commands, it would be added here!
     void delegate(Socket clientSocket) {
         try (
             PrintWriter out = new PrintWriter(clientSocket.getOutputStream(), true);
@@ -95,12 +100,11 @@ public class AsyncServer {
                 if (inputLine == null) {
                     return;
                 }
-                // else if ( inputLine.length() > MAX_MESSAGE_LENGTH  ){  //don't bother checking the commmands if the message is too long
-                //     out.println(BAD_REPLY);
-                //     break;
-                // }
+                
                 String cmd = inputLine.substring(0, CMD_LENGTH);
                 System.out.println(cmd);
+                System.out.println(inputLine);
+
                 try{
                     if (cmd.equals(GET_CMD)){
                         out.println(getMessage(inputLine));
@@ -116,12 +120,6 @@ public class AsyncServer {
                     System.err.println(e);
                 }
 
-                //synchronized(this) { //this is our lock! both put and get comands have to be done in there 
-                    //System.out.println("Client " + Thread.currentThread() + " says: " + inputLine);
-                //}
-                //out.println(Thread.currentThread() + inputLine);// client gets this
-                //break;                                            //added in this break so the client quit's itself after sending a message. That means each new message ends up as a new thread. Maybe need to change?
-           // }
         } catch (Exception e) {
             System.err.println(e);
             System.exit(-1);
@@ -129,7 +127,7 @@ public class AsyncServer {
     }
 
     //we need to have a get command, put command, and the link list setup. Client sends one message and quits. 
-    //GET should come first. Empty? Prompt for new message. Loop through the list until at empty node 
+    //this can handle multiple requests at once
     
     public void serve() {
         try (
@@ -162,7 +160,7 @@ public class AsyncServer {
             System.err.println("Need <port>");
             System.exit(-99);
         }
-        AsyncServer s = new AsyncServer(Integer.valueOf(args[0]));
+        AsyncServer s = new AsyncServer(Integer.valueOf(args[0])); //gets the port from the user off the command line to start the server
         s.serve();
     }
 }
