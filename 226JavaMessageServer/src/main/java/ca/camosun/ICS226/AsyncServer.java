@@ -14,6 +14,7 @@ public class AsyncServer {
     protected final String GET_CMD = "GET";
     protected final String PUT_CMD = "PUT";
     protected final String BAD_REPLY = "NO";
+    protected final String NO_CMD = "NO ";
     protected final String BAD_GET_REPLY = "\n";
     protected final String GOOD_PUT_REPLY = "OK";
 
@@ -45,8 +46,10 @@ public class AsyncServer {
 
         if (message == null)
             return BAD_GET_REPLY;
+        
+        //message = 
 
-        return message;
+        return NO_CMD + message; //only return the NO prepended if there was something in the dict (hopefully)
         
 
     }
@@ -70,10 +73,10 @@ public class AsyncServer {
                 return;
             } 
 
-            // if (!getMessage(fullInput.substring(0, KEY_COMMAND_LENGTH)).equals(BAD_GET_REPLY)){  //make sure no message exists at the given key .... this enforces unique key and we don't want that yet!
-            //     out.println(BAD_REPLY);
-            //     return;
-            // }
+            if (!getMessage(fullInput.substring(0, KEY_COMMAND_LENGTH)).equals(BAD_GET_REPLY)){  //this enforces unique key
+                out.println(getMessage(fullInput.substring(0, KEY_COMMAND_LENGTH)));
+                return;
+            }
 
             synchronized(this) { //this is our lock! both put and get comands have to be done in there 
                 Dict.put(key, message);
@@ -107,7 +110,7 @@ public class AsyncServer {
 
                 try{
                     if (cmd.equals(GET_CMD)){
-                        out.println(getMessage(inputLine));
+                        out.println(getMessage(inputLine)); //append NO to the start of message
                     }
                     else if (cmd.equals(PUT_CMD)){
                         putMessage(out, inputLine);

@@ -1,10 +1,9 @@
-
+package ca.camosun.ICS226;
 import java.io.*;
 import java.net.*;
 import java.nio.channels.*;
-import java.util.zip.*;
 
-public class Client {
+public class Client{
 
 	protected String serverName;
 	protected int serverPort;
@@ -17,36 +16,36 @@ public class Client {
 	}
 
 	public void connect() {
+		String reply;
+
 		try (
 			Socket socket = new Socket(serverName, serverPort);
-			PrintWriter out = new PrintWriter(new GZIPOutputStream(socket.getOutputStream()) );
+			PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
 			BufferedReader in = new BufferedReader(
 				new InputStreamReader(socket.getInputStream()));
 
 		) {
-			//outMsg.write(message.getBytes(),0, message.length());
-			out.println(message);
-			System.out.println(in.readLine());
-		} catch (UnknownHostException e) {
+			while (true) {
+				out.println(this.message);
+				if ((reply = in.readLine()) == null) {
+					break;
+				}
+				System.out.println(reply);
+				Thread.sleep(1000);
+			}
+		} catch (Exception e) {
 			System.err.println(e);
 			System.exit(-1);
-		} catch (IOException e) {
-			System.err.println(e);
-			System.exit(-2);
-		} catch (SecurityException e) {
-			System.err.println(e);
-			System.exit(-3);
-		} catch (IllegalArgumentException e) {
-			System.err.println(e);
-			System.exit(-4);
-		}
+		} 
 	}
 
 	public static void main(String[] args){
-
-		Client cli = new Client("localhost", 12345, "This is a test message!!!!");
-	
-		cli.connect();
+		if (args.length != 3) {
+			System.err.println("Need <host> <port> <message>");
+			System.exit(-2);
+		}
+		Client c = new Client(args[0], Integer.valueOf(args[1]), args[2]);
+		c.connect();
 	}
 
 }
